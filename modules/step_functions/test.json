@@ -1,0 +1,106 @@
+{
+    "Comment": "A workflow to generate a report for a Well-Architected Review and distribute it",
+    "StartAt": "PutDynamoDBData",
+    "States": {
+      "PutDynamoDBData": {
+        "Type": "Task",
+        "Resource": "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:putDynamoDBLambda",
+        "TimeoutSeconds": 120,
+        "Retry": [
+          {
+            "ErrorEquals": ["Lambda.ServiceException", "Lambda.AWSLambdaException", "Lambda.SdkClientException"],
+            "IntervalSeconds": 2,
+            "MaxAttempts": 3,
+            "BackoffRate": 2.0
+          }
+        ],
+        "Catch": [
+          {
+            "ErrorEquals": ["States.ALL"],
+            "Next": "HandlePutDynamoDBFailure"
+          }
+        ],
+        "Next": "GenerateCSV"
+      },
+      "GenerateCSV": {
+        "Type": "Task",
+        "Resource": "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:generateCSVLambda",
+        "TimeoutSeconds": 120,
+        "Retry": [
+          {
+            "ErrorEquals": ["Lambda.ServiceException", "Lambda.AWSLambdaException", "Lambda.SdkClientException"],
+            "IntervalSeconds": 2,
+            "MaxAttempts": 3,
+            "BackoffRate": 2.0
+          }
+        ],
+        "Catch": [
+          {
+            "ErrorEquals": ["States.ALL"],
+            "Next": "HandleGenerateCSVFailure"
+          }
+        ],
+        "Next": "GenerateFullReport"
+      },
+      "GenerateFullReport": {
+        "Type": "Task",
+        "Resource": "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:generateFullReportLambda",
+        "TimeoutSeconds": 300,
+        "Retry": [
+          {
+            "ErrorEquals": ["Lambda.ServiceException", "Lambda.AWSLambdaException", "Lambda.SdkClientException"],
+            "IntervalSeconds": 5,
+            "MaxAttempts": 2,
+            "BackoffRate": 2.0
+          }
+        ],
+        "Catch": [
+          {
+            "ErrorEquals": ["States.ALL"],
+            "Next": "HandleFullReportFailure"
+          }
+        ],
+        "Next": "GeneratePresignedURL"
+      },
+      "GeneratePresignedURL": {
+        "Type": "Task",
+        "Resource": "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:PresignedReportLambda",
+        "TimeoutSeconds": 60,
+        "Retry": [
+          {
+            "ErrorEquals": ["Lambda.ServiceException", "Lambda.AWSLambdaException", "Lambda.SdkClientException"],
+            "IntervalSeconds": 2,
+            "MaxAttempts": 3,
+            "BackoffRate": 2.0
+          }
+        ],
+        "Catch": [
+          {
+            "ErrorEquals": ["States.ALL"],
+            "Next": "HandlePresignedUrlFailure"
+          }
+        ],
+        "End": true
+      },
+      "HandlePutDynamoDBFailure": {
+        "Type": "Fail",
+        "Error": "PutDynamoDBDataFailed",
+        "Cause": "Failed to process DynamoDB data"
+      },
+      "HandleGenerateCSVFailure": {
+        "Type": "Fail",
+        "Error": "GenerateCSVFailed",
+        "Cause": "Failed to generate CSV file"
+      },
+      "HandleFullReportFailure": {
+        "Type": "Fail",
+        "Error": "GenerateFullReportFailed",
+        "Cause": "Failed to generate the full report"
+      },
+      "HandlePresignedUrlFailure": {
+        "Type": "Fail",
+        "Error": "PresignedUrlGenerationFailed",
+        "Cause": "Failed to generate presigned URL"
+      }
+    }
+  }

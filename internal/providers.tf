@@ -1,5 +1,5 @@
 provider "aws" {
-  region  = var.region
+  region = var.region
 }
 
 terraform {
@@ -12,7 +12,7 @@ terraform {
 
   backend "s3" {
     bucket = "tfbackendstate20240930"
-    key = "terraform.tfstate"
+    key    = "terraform.tfstate"
     region = "us-east-1"
   }
 }
