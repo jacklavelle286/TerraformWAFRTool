@@ -1,0 +1,70 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudFormation template equivalent to the provided Terraform code.
+
+Parameters:
+  InternalAccountId:
+    Type: String
+    Description: The AWS Account ID of the internal account (the target event bus is in this account)
+  
+  InternalEventBusName:
+    Type: String
+    Description: Main account eventbridge eventbus to which the events are being sent to. 
+    Default: internal_event_bus_01
+
+Resources:
+
+  # Create the IAM Role
+  RuleRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: events.amazonaws.com
+            Action: 'sts:AssumeRole'
+      Path: "/"
+      Policies:
+        - PolicyName: PutEventsPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              # Allow putting events to the target event bus in Account 2
+              - Effect: Allow
+                Action: 'events:PutEvents'
+                Resource: !Sub "arn:aws:events:${AWS::Region}:${InternalAccountId}:event-bus/${InternalEventBusName}"
+              # (Optional) If needed, allow additional permissions for the default event bus
+              # - Effect: Allow
+              #   Action: 'events:PutEvents'
+              #   Resource: !Sub "arn:aws:events:${AWS::Region}:${AWS::AccountId}:event-bus/default"
+
+  # Create the EventBridge Rule
+  PushWafrRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: push-wafr-rule-01
+      EventPattern:
+        source:
+          - "aws.wellarchitected"
+        "detail-type":
+          - "AWS API Call via CloudTrail"
+        detail:
+          eventSource:
+            - "wellarchitected.amazonaws.com"
+          eventName:
+            - "CreateMilestone"
+          requestParameters:
+            WorkloadId:
+              - exists: true
+            MilestoneName:
+              - exists: true
+      Targets:
+        - Arn: !Sub "arn:aws:events:${AWS::Region}:${InternalAccountId}:event-bus/${InternalEventBusName}"
+          Id: "Target0"
+          RoleArn: !GetAtt RuleRole.Arn
+
+Outputs:
+  RuleRoleArn:
+    Description: ARN of the IAM Role used by the EventBridge rule
+    Value: !GetAtt RuleRole.Arn
