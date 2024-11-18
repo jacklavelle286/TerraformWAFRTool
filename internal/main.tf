@@ -2,7 +2,7 @@ data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 
 
-
+# eventbride to capture customer WAFR tool information
 
 module "internal_eventbridge" {
   source              = "../modules/eventbridge"
@@ -33,8 +33,64 @@ module "eventbridge_role" {
   role_name = "eventbride-role"
   source = "../modules/iam_role"
   assume_role_service = "events"
-  policy_choice = "Allow"
-  policy_service = "states"
-  api_call = "StartExecution"
-  resource = var.step_function_arn
+  policy_blocks =  [
+    {sid = "Step functions"
+      effect = "Allow"
+      actions = ["states:StartExecution"]
+      resources = [var.step_function_arn]
+    }
+  ]
+}
+
+
+
+
+# lambda functions
+
+# Get Risks Function
+
+module "get_risks_function" {
+  source = "../modules/lambda_function"
+  filename = "../modules/lambda_function/code/getriskfunction.zip"
+  source_file = "../modules/lambda_function/code/getriskfunction.py"
+  output_path = "../modules/lambda_function/code/getriskfunction.zip"
+  handler_name = "getrisklambda_handler"
+  function_name = "get_risks_function"
+  lambda_role_arn = module.get_risks_role.rule_role_arn
+  environment_variables = {
+    DYNAMODB_TABLE = "myddbtable" # placeholder
+  }
+}
+
+module "get_risks_role" {
+  source = "../modules/iam_role"
+  role_name = "get_risks_role"
+  assume_role_service = "lambda"
+  policy_blocks =  [
+    {
+      sid = "Well Architected"
+      effect = "Allow"
+      actions = ["wellarchitected:GetLensReviewReport", "wellarchitected:GetWorkload", "wellarchitected:ListAnswers" ]
+      resources = ["*"]
+    },
+    {
+      sid = "DynamoDB"
+      effect = "Allow"
+      actions = ["dynamodb:PutItem"]
+      resources = ["arn:aws:dynamodb:eu-west-2:590183835826:table/myddbtable"] # placeholder
+    },
+    {
+      sid = "Cloudwatch Logs"
+      effect = "Allow"
+      actions = ["logs:CreateLogGroup"]
+      resources = ["arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:*"]
+    },
+    {
+      sid = "Cloudwatch Logs"
+      effect = "Allow"
+      actions = ["logs:CreateLogStream", "logs:PutLogEvents"]
+      resources = ["*"]
+    }
+  ]
+  
 }

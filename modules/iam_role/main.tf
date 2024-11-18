@@ -17,16 +17,17 @@ resource "aws_iam_role" "role" {
 
 resource "aws_iam_policy" "policy" {
   policy = jsonencode({
-    "Version": "2012-10-17",
-    "Statement": [
-      {
-        "Effect": "${var.policy_choice}",
-        "Action": "${var.policy_service}:${var.api_call}",
-        "Resource": "${var.resource}"
+    Version   = "2012-10-17",
+    Statement = [
+      for block in var.policy_blocks : {
+        Effect   = block.effect
+        Action   = block.actions
+        Resource = block.resources
       }
     ]
   })
 }
+
 
 
 resource "aws_iam_role_policy_attachment" "attachment" {
