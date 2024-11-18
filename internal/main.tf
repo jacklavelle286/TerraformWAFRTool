@@ -19,7 +19,7 @@ module "internal_eventbridge" {
         "Sid" : "AllowCustomerAccountPutEvents",
         "Effect" : "Allow",
         "Principal" : {
-          "AWS" : "arn:aws:iam::${var.customer_account_id}:root"
+          "AWS" : "arn:aws:iam::${var.customer_account_id}:role/${var.cross-account-wafr-role}"
         },
         "Action" : "events:PutEvents",
         "Resource" : "arn:aws:events:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:event-bus/${var.event_bus_name}"

@@ -22,7 +22,11 @@ variable "event_bus_name" {
   default     = "internal_event_bus_01"
 }
 
-
+variable "cross-account-wafr-role" {
+  description = "name of the role which is deployed in the customer account"
+  type = string
+  default = "cross-account-wafr-role"
+}
 
 variable "recieve_event_pattern" {
   type        = string
