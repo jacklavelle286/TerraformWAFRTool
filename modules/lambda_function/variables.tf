@@ -31,10 +31,21 @@ variable "runtime" {
 
 variable "filename" {
   description = "zipped filename"
-  
+
 }
 
 variable "environment_variables" {
   type = map(string)
   description = "Environment variables for the Lambda function"
+}
+
+variable "timeout" {
+  type = number
+  default = 3
+}
+
+variable "lambda_layers" {
+  type        = list(string)
+  description = "Optional Lambda layers to attach to the function"
+  default     = [] # Default to an empty list
 }

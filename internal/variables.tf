@@ -59,3 +59,16 @@ variable "internal_aws_profile" {
   type        = string
   default     = "internal-profile"
 }
+
+
+variable "desination_email_address" {
+  type = string
+}
+
+variable "matplotlib_layer_arn" {
+  type = string
+}
+
+variable "python_docx_layer_arn" {
+  type = string
+}
