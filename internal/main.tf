@@ -16,7 +16,7 @@ module "internal_eventbridge" {
   source              = "../modules/eventbridge"
   rule_name           = "pass-to-step-function"
   customer_account_id = var.customer_account_id
-  target_arn          = var.step_function_arn
+  target_arn          = module.step_functions.state_machine_arn
   event_pattern       = var.recieve_event_pattern
   event_bus_name      = var.event_bus_name
   rule_role_arn       = module.eventbridge_role.role_arn
