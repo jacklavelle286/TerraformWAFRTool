@@ -337,18 +337,22 @@ module "state_machine_role" {
     {
       sid       = "InvokeLambdas"
       effect    = "Allow"
-      actions   = ["lambda:Invoke"]
-      resources = ["*"] # 
+      actions   = ["lambda:InvokeFunction"]
+      resources = ["*"]
     },
     {
-      sid       = "Cloudwatch Logs"
+      sid       = "CloudwatchLogs"
       effect    = "Allow"
-      actions   = ["logs:*"]
-      resources = ["${module.step_functions.log_group_arn}"] 
+      actions   = [
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+      ]
+      resources = ["${module.step_functions.log_group_arn}:*"] # Add * qualifier here 
+      
     }
   ]
-
 }
+
 
 module "step_functions" {
   source              = "../modules/step_functions"
