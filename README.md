@@ -4,6 +4,16 @@
 
 This workflow automates generating a **Well-Architected Review Report** based on milestones created in the **Well-Architected Tool**. The workflow leverages AWS services like **Step Functions**, **Lambda**, **S3**, and **EventBridge** to process the data and deliver a final report to the admin.
 
+The infrastructure consists of two separate infrastructure deployments.
+
+### 1. Customer CloudFormation Template:
+
+- This consists of a CloudFormation template which should be deployed in the customer environment where the Well Architected Review is carried out in. This stack includes an EventBridge rule which is triggered when a new Milestone is created. This EventBridge rule then passes the information to the instrasturce in the Processing account.
+
+### 2. Internal Terraform Infrastructure:
+
+- This consists of multiple modules consisting of various services which runs a State Machine to take the Well Architected information and pass it through multiple stages, including creating a report and emailing to an administrator. 
+
 ## Workflow Steps
 
 ### 1. Template File Preparation
