@@ -3,25 +3,15 @@ variable "assume_role_service" {
   default = "events"
 }
 
-variable "policy_choice" {
-  type = string
-  default = "Allow"
-  validation {
-    condition     = contains(["Allow", "Deny"], var.policy_choice)
-    error_message = "Must be allow or Deny"  
-  }
-}
 
-variable "policy_service" {
-  type = string
-}
-
-variable "api_call" {
-  type = string
-}
-variable "resource" {
-  type = string
-
+variable "policy_blocks" {
+  type = list(object({
+    sid       = string
+    effect    = string
+    actions   = list(string)
+    resources = list(string)
+  }))
+  description = "List of policy statement blocks for the role"
 }
 
 

@@ -22,7 +22,11 @@ variable "event_bus_name" {
   default     = "internal_event_bus_01"
 }
 
-
+variable "cross-account-wafr-role" {
+  description = "name of the role which is deployed in the customer account"
+  type        = string
+  default     = "cross-account-wafr-role"
+}
 
 variable "recieve_event_pattern" {
   type        = string
@@ -54,4 +58,21 @@ variable "internal_aws_profile" {
   description = "AWS CLI profile for the internal account"
   type        = string
   default     = "internal-profile"
+}
+
+
+variable "desination_email_address" {
+  type = string
+}
+
+variable "matplotlib_layer_arn" {
+  type = string
+}
+
+variable "python_docx_layer_arn" {
+  type = string
+}
+
+variable "template_file" {
+  type = string
 }
