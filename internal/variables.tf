@@ -72,3 +72,7 @@ variable "matplotlib_layer_arn" {
 variable "python_docx_layer_arn" {
   type = string
 }
+
+variable "template_file" {
+  type = string
+}

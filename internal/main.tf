@@ -103,9 +103,10 @@ module "generate_report_function" {
   ]
   environment_variables = { 
     DYNAMODB_TABLE = module.dynamodb_table.dynamodb_table_name
-    TEMPLATE_BUCKET: module.template_bucket.bucket_name
-    DESTINATION_BUCKET: module.outputs_bucket.bucket_name
-    CSV_BUCKET: module.csv_bucket.bucket_name
+    TEMPLATE_BUCKET = module.template_bucket.bucket_name
+    DESTINATION_BUCKET = module.outputs_bucket.bucket_name
+    CSV_BUCKET = module.csv_bucket.bucket_name
+    TEMPLATE_FILE = var.template_file
   }
 }
 
@@ -117,14 +118,8 @@ module "generate_report_role" {
     {
       sid       = "S3get"
       effect    = "Allow"
-      actions   = ["s3:GetObject"]
-      resources = ["${module.outputs_bucket.bucket_arn}", "${module.csv_bucket.bucket_arn}"] 
-    },
-    {
-      sid       = "s3Put"
-      effect    = "Allow"
-      actions   = ["s3:PutObject"]
-      resources = ["${module.outputs_bucket.bucket_arn}"]  
+      actions   = ["s3:*"]
+      resources = ["${module.outputs_bucket.bucket_arn}", "${module.outputs_bucket.bucket_arn}/*", "${module.csv_bucket.bucket_arn}", "${module.csv_bucket.bucket_arn}/*", "${module.template_bucket.bucket_arn}/*", "${module.template_bucket.bucket_arn}"] 
     },
     {
       sid       = "Well Architected"
@@ -159,6 +154,7 @@ module "generate_csv_function" {
   output_path     = "../modules/lambda_function/code/generatecsv.zip"
   handler_name    = "generatecsv.lambda_handler"
   function_name   = "generate_csv_function"
+  timeout = 300
   lambda_role_arn = module.generate_csv_role.role_arn
   environment_variables = {
     DYNAMODB_TABLE = module.dynamodb_table.dynamodb_table_name
@@ -181,7 +177,7 @@ module "generate_csv_role" {
       sid       = "s3Access"
       effect    = "Allow"
       actions   = ["s3:PutObject"]
-      resources = ["${module.csv_bucket.bucket_arn}"] 
+      resources = ["${module.csv_bucket.bucket_arn}", "${module.csv_bucket.bucket_arn}/*"] 
     },
     {
       sid       = "Cloudwatch Logs"
@@ -260,6 +256,7 @@ module "get_risks_function" {
   output_path     = "../modules/lambda_function/code/getriskfunction.zip"
   handler_name    = "getriskfunction.lambda_handler"
   function_name   = "get_risks_function"
+  timeout = 300
   lambda_role_arn = module.get_risks_role.role_arn
   environment_variables = {
     DYNAMODB_TABLE = module.dynamodb_table.dynamodb_table_name
@@ -328,12 +325,11 @@ module "outputs_bucket" {
 
 
 # state machine role 
-
 module "state_machine_role" {
   source              = "../modules/iam_role"
   role_name           = "state_machine_role"
   assume_role_service = "states"
-  policy_blocks = [
+  policy_blocks       = [
     {
       sid       = "InvokeLambdas"
       effect    = "Allow"
@@ -344,15 +340,12 @@ module "state_machine_role" {
       sid       = "CloudwatchLogs"
       effect    = "Allow"
       actions   = [
-        "logs:CreateLogStream",
-        "logs:PutLogEvents"
+        "logs:*"
       ]
-      resources = ["${module.step_functions.log_group_arn}:*"] # Add * qualifier here 
-      
+      resources = ["*"]
     }
   ]
 }
-
 
 module "step_functions" {
   source              = "../modules/step_functions"
