@@ -1,5 +1,55 @@
 ## WAFR Report Generator
 
-Architecture Diagram:https://github.com/jacklavelle286/TerraformWAFRTool/tree/main
+# Workflow Overview
 
-[View Interactive Architecture Diagram]([https://viewer.diagrams.net/?tags=%7B%7D&lightbox=1&highlight=0000ff&layers=1&nav=1#R%3Cmxfile%3E%3Cdiagram%20name%3D%22Page-1%22%20id%3D%22EEdD8Ro1HCLQpz7YY84q%22%3E...](https://viewer.diagrams.net/?tags=%7B%7D&lightbox=1&highlight=0000ff&layers=1&nav=1#R%3Cmxfile%3E%3Cdiagram%20name%3D%22Page-1%22%20id%3D%22EEdD8Ro1HCLQpz7YY84q%22%3E7VzbcqM4EP0aP8aFwFz86EsyM1vZrWwyuzPz5FJAttlg5AIR2%2Fv12wJhg4Qv2djGTphJKqgRup7T3WoJWsZgtvwS4fn0d%2BqRoKVr3rJlDFu6rndNBH%2B4ZJVJEELdTDKJfE%2FINoIn%2F18ihJqQJr5H4lJGRmnA%2FHlZ6NIwJC4ryXAU0UU525gG5VrneEIUwZOLA1X6w%2FfYNO%2BG1d3c%2BEr8yVRU7eh2dmOG88yiJ%2FEUe3RREBm3LWMQUcqyq9lyQAI%2Bevm4ZM%2Fdbbm7blhEQnbIAz%2FN327Gk6eHFXYe4l%2B%2F3ORFn96IUl5xkIgO9348gWAQ0MQT7WarfDDiF8Jc3iutZfRpwgI%2FJIP1wHPhJMKeDw0a0IBGIAtpCM%2F2p2wWQArB5WLqM%2FI0xy4vcwGoAdmYhkxMPdLztKiWlwpDN%2BfXs%2BWEw6yNF3GnPYloMk%2Br%2FAaTX3l3BJcjN%2B0KFMIi%2BkLyhrV0o9fr232HV%2BcHgdTgVxIxH1DQC%2FwJL5tRXhUWqYCMGS8ReuGHk%2Fs0NTQ00fKqKjwcT4knuiPGHKogy62TidYQAXIROiMsWkEW8UBHgGpVTi42EHVsIZsW0GlbQogFLSbrkjfIgQsBnjcASVeA9C1kJAoxf%2FJHVkAvcvnkuwxGAlKuSxPorW7hGR%2Fc8DmerwenALo59UOWNtfsww90YKC1TLgz4Km2bkoCOW2XBUhN8TLKAjltlwVILh5J9SO5gQWBkioVr0n1a4UGws9ZaQe0YhjqikQZ6UyQ6PaVZBOS5QkCPI%2F95%2FVTEXGTKPZfySOJs8LfR2EBkwoCD4a6bnVOSuB1FccmsGWUCKxbFQxGtsrgTvdUDDYUBqcT3U%2FivRTdbxekYYX%2Fd7xp24BbnFDIfmsj0%2B4rEBCZS1OTz%2Fs9fibBA4195qfIeqaM0dleYLiEI7xMnX00wfE86%2BjYX%2FJ2KDxB2%2FBPeI5n8HsmZOSRMU4CNkplo%2BckHkUkpknECXsY4Lbr5R1mxGwb5l5T4rQNFYknMyUdBYh%2FJiTm8xi33fh1N%2FoqrUWlxaiyGpWWQ7UepWypPq%2BoQRZWyWxViNRsuQlQhVWyKnsnP40qnkbS09utzTYyS6y1ez3wk6sU9zj9d4nUraRpTsTMSIGBi6vMVWyckKi6XmapYas0tZ0Kh885EUlNhaRfoVZeU8idu9%2BJ5yczuHj04xf48x1zB6Fh7nUwd9DVzcxqfQrmeqsQz6j3fEL%2BOvZl0ddS6PudzOYBZqTtUXfZMPVKmNrY2ONx1LAujKS2QtI7PwuoPJI5jRhcPAzvGq42XP10XO3YF8ZVR%2BHqIIlhmmAG9sU%2Fm3hnE%2B%2F88PFO3UDt8hLWURlrOpZKWXSyQFO3OuIJohv4%2FYMs%2BELWDwjwONyzeG2Cnm8Ler7LNDh7kOZISKsKaVZsjjmnwlm%2Bl62E1tPIL3fnkiY4cjVu3BZeflQ3rrBHcSRL0NUkfiI9m0nZf%2Bvm%2BUoe3Fp6fJ4ihYQEup2PLKy4pnRCYQV2u5H2wWiH3nqyN3nuKZ%2FGdLr%2BIYytxHzhhNHyZGZ1Ek85hyINKLRLbAdt74DYhWc4mpBdGrRbPUMRCTADT6ZU6%2FGHWT0rUOkgf6c0aLTiGbViM5yNkanHyCyA%2FyOcs3%2FET%2Fgdx9hYpmpsUL2RAmRcuZXpHmhkkFY9NWeyMuoxguxo4xMjc%2Fhzl4RueqaAQ4FGL%2BOALppYTBOLkY%2BPxgCX0TgHy2gNlQ8Wn0H5MeV8zZyni2oyl5XCM6dbNpsXqih36pv9Trp1qP7cEuc4k%2F5Ut4i%2FEOAjZjxiMXj6u3HNr8WXHNpI0z6NLxng2bOH3xVgzLi8XVdaTllXWjV7lPbHVJTOoYqy3nCGuvVXUJT5Tn2jKxtd%2BRl1pYEkv7JuXalu%2BhXY%2BgDjBDOThh%2F%2FerxvaNvQ9nPS1rQui7brl2gvzcU5dtDMeKcrkz7aiyK8KmQQmmpT8gMXFKKkWnm28yMXdwfm183d%2BU1k7MoPF1mLN%2FhYd%2F0dkEGKpm%2BOd1zY8Y7dMSnZd9Dzdx%2FrOsih61euhYwDtdC2iTnPikq%2F9h0SvXPoytWqdZzVLZIvhOvH9dtb6ctc8su%2FVsD57fmvcDnhl%2BLNL%2FGq1zdGZnGeC9pVyNj4040%2Fff3%2B9J6NFFP2nOt2nWvZRoHRilY%2FxfNp4hdPAHBFcrgs3hyuiqkHEvnQ%2BXTzTzuyakaHmsAtC6TTeuJI8qwNY7dnLec3NfMMnrV19YgiS5%2F9LFxnRdmmSG6K4olVIXFKaB7qNZi1INOQkKabu5Ep5bfEF7NOi8xadkI%2BPDIP3rKuRWfq1tuQKec%2FDzKdWpB5iWA6dFvvvWuj%2FwWmjmxQ94BJzn8eMHXrBBO6RjDZdYDJtLu7wHQacOR2t7CqH5IA%2BhjxMY7ITbPDdY0r8s91IDwO4%2BMsxy1H0s85PepajhtX%2F5LRe0%2FbVOtK2ywfqrLyOEpeRKbixVObSXirTnbQzhXz3vzWnr2ubf04rc7XFZ3f82Z%2BqECtAIm9GkLRBQHP2cfuyyTFY5UOqtYqmc7Kv5%2BsV2kxw9A01MuURvaZZE1WabI68Wlst32XfxYwidMGHkFfdOXFQe64F%2FecOqq%2BONmek1HLZshmSdvWtI60rEV1B%2FFyHb5%2FN11%2Fp67aMnWQ3Hy4OyPx5vvnxu1%2F%3C%2Fdiagram%3E%3C%2Fmxfile%3E))
+This workflow automates generating a **Well-Architected Review Report** based on milestones created in the **Well-Architected Tool**. The workflow leverages AWS services like **Step Functions**, **Lambda**, **S3**, and **EventBridge** to process the data and deliver a final report to the admin.
+
+## Workflow Steps
+
+### 1. Template File Preparation
+- **Precondition**: A template file (`Template.docx`) is manually uploaded into the **Template S3 Bucket**. This is required as the foundation for generating the final PDF report.
+
+### 2. Milestone Trigger in the Customer Account
+- **Well-Architected Tool**: A customer completes a new milestone in the **Well-Architected Tool** (e.g., they complete a review for their workload).
+- **EventBridge Rule**: The new milestone triggers an **EventBridge Rule** in the customer's account.
+- **Event Forwarding**: The EventBridge rule forwards the "New Milestone" event to the **Internal Well-Architected Account** using an EventBridge event bus.
+
+### 3. Internal Well-Architected Account: Triggering the Step Functions Workflow
+- **Event Bus**: The "New Milestone" event is received by the **Internal Well-Architected Account's EventBus**, triggering the **AWS Step Functions Workflow**.
+
+### 4. AWS Step Functions Workflow Execution
+The Step Functions workflow orchestrates the following steps using Lambda functions:
+
+#### Step 4.1: Get Medium and High Risk Items
+- **Lambda Function**: Retrieves details of **medium-risk** and **high-risk** items from the **Well-Architected Tool** for the relevant workload milestone.
+- **Output**: Generates a table of risks that is stored as `High and Medium Risk Table` in the **S3 Bucket**.
+
+#### Step 4.2: Generate CSV
+- **Lambda Function**: Creates a CSV file with questions and their answers (e.g., workload assessment details).
+- **Output**: Stores the `Questions.csv` in the **S3 Bucket**.
+
+#### Step 4.3: Generate Report
+- **Lambda Function**: Combines:
+  - The retrieved **Risk Data**,
+  - The **Questions CSV**, and
+  - The pre-uploaded `Template.docx` from the template bucket.
+- **Output**: Creates a formatted **Final Report PDF** and stores it in the **S3 Bucket**.
+
+#### Step 4.4: Generate Presigned URL
+- **Lambda Function**: Generates a **pre-signed URL** for the **Final Report PDF** stored in the **S3 Bucket**.
+- **Output**: The pre-signed URL is ready for secure delivery.
+
+#### Step 4.5: Deliver Pre-Signed URL
+- **Admin Notification**: The pre-signed URL is delivered to the **Admin**, allowing them to securely download the final PDF report.
+
+---
+
+## Final Output
+
+- **Admin** receives a link to the generated **Final Report PDF** via the **pre-signed URL**.
+- This report contains the detailed assessment, including risks and recommendations, formatted according to the provided template.
+
+## Architecture Diagram:
+
+![Architecture Diagram](wafr.jpg)
+
