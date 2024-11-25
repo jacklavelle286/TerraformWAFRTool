@@ -13,6 +13,16 @@ import logging
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
+# Define the desired order of pillars
+PILLAR_ORDER = [
+    'Security',
+    'Cost Optimization',
+    'Reliability',
+    'Operational Excellence',
+    'Performance Efficiency',
+    'Sustainability'
+]
+
 def lambda_handler(event, context):
     logger.info("Starting Lambda execution.")
     
@@ -106,8 +116,8 @@ def get_milestone_name(wa_client, workload_id, milestone_number):
 def parse_csv_and_fetch_details(csv_content, wa_client):
     logger.info("Parsing CSV and fetching details.")
     risks_per_pillar = {}
-    high_risk_items = []
-    medium_risk_items = []
+    high_risk_items = {}    # Now a dict with pillars as keys
+    medium_risk_items = {}  # Now a dict with pillars as keys
 
     csv_reader = csv.DictReader(io.StringIO(csv_content))
     for row in csv_reader:
@@ -120,12 +130,12 @@ def parse_csv_and_fetch_details(csv_content, wa_client):
         risk = row['Risk']
         question_text = question_details['Answer']['QuestionTitle']
 
-        formatted_text = f"{pillar_id}: {question_text}, Notes: {row['Notes']}"
+        formatted_text = f"{question_text}, Notes: {row['Notes']}"
         if risk == 'HIGH':
-            high_risk_items.append(formatted_text)
+            high_risk_items.setdefault(pillar_id, []).append(formatted_text)
             risks_per_pillar.setdefault(pillar_id, {"HIGH": 0, "MEDIUM": 0})["HIGH"] += 1
         elif risk == 'MEDIUM':
-            medium_risk_items.append(formatted_text)
+            medium_risk_items.setdefault(pillar_id, []).append(formatted_text)
             risks_per_pillar.setdefault(pillar_id, {"HIGH": 0, "MEDIUM": 0})["MEDIUM"] += 1
 
     return risks_per_pillar, high_risk_items, medium_risk_items
@@ -136,13 +146,16 @@ def format_pillar_id(pillar_id):
         return 'Cost Optimization'
     elif pillar_id.lower() == 'operationalexcellence':
         return 'Operational Excellence'
+    elif pillar_id.lower() == 'performanceefficiency':
+        return 'Performance Efficiency'
     else:
         return ' '.join(word.capitalize() for word in pillar_id.split())
 
 def generate_risk_graph(risks_per_pillar):
-    pillars = list(risks_per_pillar.keys())
-    high_risks = [risks_per_pillar[pillar]["HIGH"] for pillar in pillars]
-    medium_risks = [risks_per_pillar[pillar]["MEDIUM"] for pillar in pillars]
+    # Ensure pillars are in the desired order
+    pillars = PILLAR_ORDER
+    high_risks = [risks_per_pillar.get(pillar, {"HIGH": 0})["HIGH"] for pillar in pillars]
+    medium_risks = [risks_per_pillar.get(pillar, {"MEDIUM": 0})["MEDIUM"] for pillar in pillars]
 
     x = range(len(pillars))
     width = 0.35
@@ -169,11 +182,28 @@ def replace_graph_placeholders(document, graph_path):
             paragraph.add_run().add_picture(graph_path, width=Inches(4))
 
 def replace_risk_placeholders(document, high_risk_items, medium_risk_items):
+    # Prepare high risk items text grouped by pillar
+    high_risk_text = ""
+    for pillar in PILLAR_ORDER:
+        if pillar in high_risk_items:
+            high_risk_text += f"\n{pillar}\n"
+            for item in high_risk_items[pillar]:
+                high_risk_text += f"- {item}\n"
+
+    # Prepare medium risk items text grouped by pillar
+    medium_risk_text = ""
+    for pillar in PILLAR_ORDER:
+        if pillar in medium_risk_items:
+            medium_risk_text += f"\n{pillar}\n"
+            for item in medium_risk_items[pillar]:
+                medium_risk_text += f"- {item}\n"
+
+    # Replace placeholders in the document
     for paragraph in document.paragraphs:
         if '{{highrisk}}' in paragraph.text:
-            replace_paragraph_with_text(paragraph, "\n".join(high_risk_items))
+            replace_paragraph_with_text(paragraph, high_risk_text.strip())
         elif '{{mediumrisk}}' in paragraph.text:
-            replace_paragraph_with_text(paragraph, "\n".join(medium_risk_items))
+            replace_paragraph_with_text(paragraph, medium_risk_text.strip())
 
 def replace_paragraph_with_text(paragraph, text):
     paragraph.clear()

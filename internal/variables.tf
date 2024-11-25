@@ -4,14 +4,10 @@ variable "region" {
 }
 
 
-variable "step_function_arn" {
-  type    = string
-  default = "arn:aws:states:eu-west-2:590183835826:stateMachine:MyStateMachine-qjsg9eb39"
-}
 
 variable "customer_account_id" {
   type    = string
-  default = "992382778815"
+  default = "050752633066"
 
 }
 

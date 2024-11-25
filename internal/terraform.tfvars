@@ -1,5 +1,5 @@
 internal_aws_profile     = "internal-profile"
-desination_email_address = "lavellej286@gmail.com"
+desination_email_address = "jack.gibson-lavelle@ingrammicro.com"
 # layer arns for python 3.11 for london region
 
 matplotlib_layer_arn  = "arn:aws:lambda:eu-west-2:770693421928:layer:Klayers-p311-python-docx:8"
