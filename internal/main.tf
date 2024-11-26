@@ -96,6 +96,7 @@ module "generate_report_function" {
   function_name   = "generate_report_function"
   runtime = "python3.11"
   timeout = 300
+  memory_size = 1000
   lambda_role_arn = module.generate_report_role.role_arn
   lambda_layers       = [
     "${var.python_docx_layer_arn}",
@@ -190,7 +191,13 @@ module "generate_csv_role" {
       effect    = "Allow"
       actions   = ["logs:CreateLogStream", "logs:PutLogEvents"]
       resources = ["*"]
-    }
+    },
+    {
+      sid       = "Well Architected"
+      effect    = "Allow"
+      actions   = ["wellarchitected:GetLensReviewReport", "wellarchitected:GetWorkload", "wellarchitected:ListAnswers", "wellarchitected:GetAnswer"]
+      resources = ["*"]
+    },
   ]
 
 }
@@ -271,7 +278,7 @@ module "get_risks_role" {
     {
       sid       = "Well Architected"
       effect    = "Allow"
-      actions   = ["wellarchitected:GetLensReviewReport", "wellarchitected:GetWorkload", "wellarchitected:ListAnswers"]
+      actions   = ["wellarchitected:GetLensReviewReport", "wellarchitected:GetWorkload", "wellarchitected:ListAnswers", "wellarchitected:GetAnswer"]
       resources = ["*"]
     },
     {

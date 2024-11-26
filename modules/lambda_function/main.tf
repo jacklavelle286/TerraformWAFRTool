@@ -3,6 +3,7 @@ resource "aws_lambda_function" "this" {
   handler = var.handler_name
   function_name = var.function_name
   role = var.lambda_role_arn
+  memory_size = var.memory_size
   runtime = var.runtime
   timeout = var.timeout
   layers           = length(var.lambda_layers) > 0 ? var.lambda_layers : null

@@ -49,3 +49,9 @@ variable "lambda_layers" {
   description = "Optional Lambda layers to attach to the function"
   default     = [] # Default to an empty list
 }
+
+
+variable "memory_size" {
+  type = number
+  default = 128
+}

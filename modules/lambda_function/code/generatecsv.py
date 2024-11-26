@@ -4,6 +4,7 @@ import io
 import os
 import json
 import logging
+import ast
 
 # Initialize logging
 logger = logging.getLogger()
@@ -21,10 +22,10 @@ def lambda_handler(event, context):
     milestone_number = event_data['milestone_number']
     logger.info(f"Extracted milestone_number: {milestone_number}")
 
-
     # Initialize AWS clients
     dynamodb = boto3.resource('dynamodb')
     s3 = boto3.client('s3')
+    wa_client = boto3.client('wellarchitected')
     logger.info("Initialized AWS clients")
 
     # Reference the DynamoDB table
@@ -47,10 +48,46 @@ def lambda_handler(event, context):
     # Generate CSV content
     csv_content = io.StringIO()
     csv_writer = csv.writer(csv_content)
-    csv_writer.writerow(['WorkloadId', 'QuestionId', 'Risk', 'SelectedChoices', 'Notes'])  # Header
+    # Updated header to include ChoiceIds and ChoiceTitles
+    csv_writer.writerow(['WorkloadId', 'QuestionId', 'Risk', 'SelectedChoices', 'Notes', 'ChoiceIds', 'ChoiceTitles'])
 
     for item in response['Items']:
-        csv_writer.writerow([item['WorkloadId'], item['QuestionId'], item['Risk'], item['SelectedChoices'], item['Notes']])
+        # Fetch the choices for each question
+        try:
+            question_details = wa_client.get_answer(
+                WorkloadId=workload_id,
+                LensAlias='wellarchitected',
+                QuestionId=item['QuestionId'],
+                MilestoneNumber=milestone_number,
+            )
+            choices = question_details['Answer'].get('Choices', [])
+            # Extract ChoiceIds and ChoiceTitles
+            choice_ids = [choice['ChoiceId'] for choice in choices]
+            choice_titles = [choice['Title'] for choice in choices]
+        except Exception as e:
+            logger.error(f"Error fetching choices for QuestionId {item['QuestionId']}: {str(e)}")
+            choice_ids = []
+            choice_titles = []
+        
+        # Convert SelectedChoices to a list if it's a string
+        selected_choices = item.get('SelectedChoices', '[]')
+        if isinstance(selected_choices, str):
+            try:
+                selected_choices = ast.literal_eval(selected_choices)
+            except Exception as e:
+                logger.error(f"Error parsing SelectedChoices for QuestionId {item['QuestionId']}: {str(e)}")
+                selected_choices = []
+
+        # Write to CSV
+        csv_writer.writerow([
+            item['WorkloadId'],
+            item['QuestionId'],
+            item['Risk'],
+            json.dumps(selected_choices),  # Ensure it's a JSON string
+            item.get('Notes', ''),
+            json.dumps(choice_ids),        # Store as JSON string
+            json.dumps(choice_titles)      # Store as JSON string
+        ])
     logger.info("CSV content generated")
 
     # Upload CSV to S3 bucket

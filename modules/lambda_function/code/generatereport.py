@@ -8,6 +8,10 @@ from docx.shared import RGBColor, Inches, Pt
 from datetime import datetime
 import json
 import logging
+import ast
+import docx
+from docx.oxml import OxmlElement
+from docx.oxml.ns import qn
 
 # Initialize logging
 logger = logging.getLogger()
@@ -46,7 +50,7 @@ def lambda_handler(event, context):
     logger.info(f"CSV_FILE_NAME: {csv_file_name}")
     
     # Build the S3 key dynamically
-    s3_key = template_file_name  # If stored in a prefix, prepend the prefix: e.g., "templates/{template_file_name}"
+    s3_key = template_file_name
     logger.info(f"Resolved S3 Key: {s3_key}")
     
     # Initialize AWS clients
@@ -62,7 +66,8 @@ def lambda_handler(event, context):
         logger.info("Downloading CSV file from S3.")
         csv_object = s3.get_object(Bucket=csv_bucket, Key=csv_file_name)
         csv_content = csv_object['Body'].read().decode('utf-8')
-        risks_per_pillar, high_risk_items, medium_risk_items = parse_csv_and_fetch_details(csv_content, wa_client)
+        risks_per_pillar, high_risk_items, medium_risk_items = parse_csv_and_fetch_details(
+            csv_content, wa_client, workload_id, milestone_number)
         
         # Generate the graph and get its file path
         graph_image_path = generate_risk_graph(risks_per_pillar)
@@ -113,24 +118,71 @@ def get_milestone_name(wa_client, workload_id, milestone_number):
     response = wa_client.get_milestone(WorkloadId=workload_id, MilestoneNumber=milestone_number)
     return response['Milestone']['MilestoneName']
 
-def parse_csv_and_fetch_details(csv_content, wa_client):
+def parse_csv_and_fetch_details(csv_content, wa_client, workload_id, milestone_number):
     logger.info("Parsing CSV and fetching details.")
     risks_per_pillar = {}
-    high_risk_items = {}    # Now a dict with pillars as keys
-    medium_risk_items = {}  # Now a dict with pillars as keys
+    high_risk_items = {}
+    medium_risk_items = {}
 
     csv_reader = csv.DictReader(io.StringIO(csv_content))
     for row in csv_reader:
-        question_details = wa_client.get_answer(
-            WorkloadId=row['WorkloadId'],
-            LensAlias='wellarchitected',
-            QuestionId=row['QuestionId']
-        )
-        pillar_id = format_pillar_id(question_details['Answer']['PillarId'])
+        question_id = row['QuestionId']
         risk = row['Risk']
-        question_text = question_details['Answer']['QuestionTitle']
+        logger.info(f"Processing QuestionId: {question_id}, Risk: {risk}")
 
-        formatted_text = f"{question_text}, Notes: {row['Notes']}"
+        # Parse SelectedChoices from CSV
+        selected_choices = []
+        if 'SelectedChoices' in row and row['SelectedChoices']:
+            try:
+                selected_choices = ast.literal_eval(row['SelectedChoices'])
+                logger.debug(f"Selected choices for QuestionId {question_id}: {selected_choices}")
+            except Exception as e:
+                logger.error(f"Error parsing SelectedChoices for QuestionId {question_id}: {str(e)}")
+
+        # Fetch answer with choices
+        try:
+            question_details = wa_client.get_answer(
+                WorkloadId=workload_id,
+                LensAlias='wellarchitected',
+                QuestionId=question_id,
+                MilestoneNumber=milestone_number,
+            )
+            logger.debug(f"Question Details for {question_id}: {json.dumps(question_details)}")
+        except Exception as e:
+            logger.error(f"Error fetching answer for QuestionId {question_id}: {str(e)}")
+            continue
+
+        pillar_id = format_pillar_id(question_details['Answer']['PillarId'])
+        question_text = question_details['Answer']['QuestionTitle']
+        logger.info(f"Question Title: {question_text}, Pillar: {pillar_id}")
+
+        # Extract unselected choices and construct URLs
+        unselected_choices = []
+        if 'Choices' in question_details['Answer']:
+            for choice in question_details['Answer']['Choices']:
+                choice_id = choice['ChoiceId']
+                if choice_id not in selected_choices:
+                    # Construct the documentation URL
+                    doc_url = f"https://docs.aws.amazon.com/wellarchitected/latest/framework/{choice_id}.html"
+                    unselected_choices.append({'title': choice['Title'], 'url': doc_url})
+        else:
+            logger.warning(f"No Choices found for QuestionId {question_id}")
+
+        # Build improvement text with hyperlinks
+        if unselected_choices:
+            improvement_texts = []
+            for item in unselected_choices:
+                improvement_texts.append(f"- {item['title']} ({item['url']})")
+            improvement_text = "\n".join(improvement_texts)
+        else:
+            improvement_text = "No improvement plans available."
+
+        formatted_text = (
+            f"{question_text}\n"
+            f"Notes: {row.get('Notes', '')}\n"
+            f"Improvement Plan:\n{improvement_text}"
+        )
+
         if risk == 'HIGH':
             high_risk_items.setdefault(pillar_id, []).append(formatted_text)
             risks_per_pillar.setdefault(pillar_id, {"HIGH": 0, "MEDIUM": 0})["HIGH"] += 1
@@ -179,7 +231,7 @@ def replace_graph_placeholders(document, graph_path):
     for paragraph in document.paragraphs:
         if '{{pillargraph}}' in paragraph.text:
             paragraph.clear()
-            paragraph.add_run().add_picture(graph_path, width=Inches(4))
+            paragraph.add_run().add_picture(graph_path, width=Inches(6))
 
 def replace_risk_placeholders(document, high_risk_items, medium_risk_items):
     # Prepare high risk items text grouped by pillar
@@ -188,7 +240,7 @@ def replace_risk_placeholders(document, high_risk_items, medium_risk_items):
         if pillar in high_risk_items:
             high_risk_text += f"\n{pillar}\n"
             for item in high_risk_items[pillar]:
-                high_risk_text += f"- {item}\n"
+                high_risk_text += f"{item}\n\n"  # Added extra newline for readability
 
     # Prepare medium risk items text grouped by pillar
     medium_risk_text = ""
@@ -196,7 +248,7 @@ def replace_risk_placeholders(document, high_risk_items, medium_risk_items):
         if pillar in medium_risk_items:
             medium_risk_text += f"\n{pillar}\n"
             for item in medium_risk_items[pillar]:
-                medium_risk_text += f"- {item}\n"
+                medium_risk_text += f"{item}\n\n"  # Added extra newline for readability
 
     # Replace placeholders in the document
     for paragraph in document.paragraphs:
@@ -207,7 +259,49 @@ def replace_risk_placeholders(document, high_risk_items, medium_risk_items):
 
 def replace_paragraph_with_text(paragraph, text):
     paragraph.clear()
-    paragraph.add_run(text)
+    add_hyperlinked_text(paragraph, text)
+
+def add_hyperlinked_text(paragraph, text):
+    # Split the text by lines
+    lines = text.split('\n')
+    for line in lines:
+        if '(' in line and ')' in line:
+            # Extract the URL
+            start = line.find('(')
+            end = line.find(')', start)
+            if start != -1 and end != -1:
+                url = line[start+1:end]
+                display_text = line[:start].strip(' -')
+                # Add hyperlink
+                add_hyperlink(paragraph, url, display_text)
+                paragraph.add_run('\n')
+        else:
+            paragraph.add_run(line + '\n')
+
+def add_hyperlink(paragraph, url, text):
+    # This function adds a hyperlink to a paragraph.
+    # Reference: https://stackoverflow.com/a/42334914
+    part = paragraph.part
+    r_id = part.relate_to(url, docx.opc.constants.RELATIONSHIP_TYPE.HYPERLINK, is_external=True)
+
+    hyperlink = OxmlElement('w:hyperlink')
+    hyperlink.set(qn('r:id'), r_id, )
+    
+    new_run = OxmlElement('w:r')
+    rPr = OxmlElement('w:rPr')
+    
+    # Style for the hyperlink
+    rStyle = OxmlElement('w:rStyle')
+    rStyle.set(qn('w:val'), 'Hyperlink')
+    rPr.append(rStyle)
+    new_run.append(rPr)
+    
+    # Text for the hyperlink
+    text_element = OxmlElement('w:t')
+    text_element.text = text
+    new_run.append(text_element)
+    hyperlink.append(new_run)
+    paragraph._p.append(hyperlink)
 
 def replace_customer_with_milestone_name(document, milestone_name):
     for paragraph in document.paragraphs:
